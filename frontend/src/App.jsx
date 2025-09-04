@@ -5,9 +5,9 @@ import PaymentRejection from './pages/PaymentRejection';
 import PaymentPage from './pages/PaymentPage'; 
 import './App.css'
 import PrivateRoute from './components/PrivateRoute';
-import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import DashboardAdmin from './pages/DashboardAdmin';
 
 function App() {
   return (
@@ -16,9 +16,10 @@ function App() {
         <Route path="/" element={<PaymentPage />} />
         <Route path="/completion" element={<PaymentCompletion />} />
         <Route path='/rejection' element={<PaymentRejection/>}/>
-        <Route path='/Dashboard' element={<PrivateRoute><Dashboard/></PrivateRoute>}/>
+     
         <Route path='/login' element={<Login/>}/>
-        <Route path='/register' element={<PrivateRoute><Register/></PrivateRoute>}/>
+        <Route path='/register' element={<Register/>}/>
+                <Route path='/dashboard' element={<DashboardAdmin/>}/>
       </Routes>
     
   );
