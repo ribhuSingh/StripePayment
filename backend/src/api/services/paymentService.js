@@ -1,19 +1,23 @@
-import knex from "knex";
-import knexConfig from '../../../knexfile.cjs'; // your knex instance
-const db = knex(knexConfig.development);
+import db from "../../../config/db.js";
 export const findOrCreatePaymentUser = async ({ project_id, email, phone, external_user_id }) => {
+  // Step 1: Try to find the user. This part is the same for all SQL databases.
   let user = await db('PaymentUsers').where({ email, project_id }).first();
 
+  // Step 2: If the user doesn't exist, create them.
   if (!user) {
-    const [newUser] = await db('PaymentUsers')
-      .insert({
-        project_id,
-        email,
-        phone,
-        external_user_id
-      })
-      .returning('*'); // works in PostgreSQL; in MySQL you’d query again
-    user = newUser;
+    console.log(`User with email ${email} not found for project ${project_id}. Creating new user...`);
+    
+    // This is the MySQL-compatible way:
+    // First, insert the new user and get back the ID of the new row.
+    const [newUserId] = await db('PaymentUsers').insert({
+      project_id,
+      email,
+      phone,
+      external_user_id,
+    });
+
+    // Second, use that new ID to fetch the complete user record you just created.
+    user = await db('PaymentUsers').where({ payment_user_id: newUserId }).first();
   }
 
   return user;
