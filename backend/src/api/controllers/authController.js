@@ -47,16 +47,21 @@ export const register = async (req, res) => {
     if (newUser) {
       // 6. Respond with the new user's data and a JWT
       res.status(201).json({
-        id: newUser.id,
-        email: newUser.email,
+        success: true,
+        message: "Registration successful!",
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          token: generateToken(newUser.id),
+        }
       });
     } else {
       // This case should rarely happen if the insert was successful
-      res.status(500).json({ error: 'Failed to create user after insert.' });
+      res.status(500).json({ success: false, message: 'Failed to create user after insert.' });
     }
   } catch (error) {
     console.error("Error during user registration:", error);
-    res.status(500).json({ error: 'Server error during registration.' });
+    res.status(500).json({ success: false, message: 'Server error during registration.' });
   }
 };
 export const login = async (req, res) => {
@@ -77,16 +82,20 @@ export const login = async (req, res) => {
     if (adminUser && (await bcrypt.compare(password, adminUser.password))) {
       // Passwords match, user is authenticated
       res.status(200).json({
-        id: adminUser.id,
-        email: adminUser.email,
-        token: generateToken(adminUser.id),
+        success: true,
+        message: "Login successful!",
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          token: generateToken(adminUser.id),
+        }
       });
     } else {
       // User not found or password does not match
-      return res.status(401).json({ error: 'Invalid credentials.' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
   } catch (error) {
     console.error("Error during admin login:", error);
-    res.status(500).json({ error: 'Server error during login.' });
+    res.status(500).json({ success: false, message: 'Server error during login.' });
   }
 };
