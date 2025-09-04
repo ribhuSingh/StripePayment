@@ -5,6 +5,7 @@ import { STRIPE_SECRET_KEY } from "../../../config/env.js";
 const stripe = new Stripe(STRIPE_SECRET_KEY); 
 
 const createCheckoutSession = async (req, res) => {
+  console.log('api called')
   const { name, email, address, phone, amount, orderId, url, external_user_id } = req.body;
 
   // 1. Validate project
