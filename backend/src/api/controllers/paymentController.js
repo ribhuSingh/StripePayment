@@ -1,9 +1,8 @@
 import { findOrCreatePaymentUser, createPaymentRecord } from "../services/paymentService.js";
-import knex from "knex";
-import knexConfig from '../../../knexfile.cjs'; 
-const db = knex(knexConfig.development);
+import db from "../../../config/db.js";
 import Stripe from "stripe";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
+import { STRIPE_SECRET_KEY } from "../../../config/env.js";
+const stripe = new Stripe(STRIPE_SECRET_KEY); 
 
 const createCheckoutSession = async (req, res) => {
   const { name, email, address, phone, amount, orderId, url, external_user_id } = req.body;
@@ -27,6 +26,7 @@ const createCheckoutSession = async (req, res) => {
       phone,
       external_user_id: external_user_id || null,
     });
+    console.log('ribhuuser',user);
 
     // 3. First create the payment record with pending status
     const payment = await createPaymentRecord({
@@ -56,15 +56,24 @@ const createCheckoutSession = async (req, res) => {
       }],
       success_url: `http://localhost:5173/completion`,
       cancel_url: `http://localhost:5173/rejection`,
-      metadata: { payment_id: payment,orderId:orderId },  // ✅ use primary key
-    });
-
+       payment_intent_data: {
+        metadata: {
+          payment_id: payment,
+          order_id: orderId ,
+          project_id:project_id,
+          payment_user_id: user.payment_user_id
+        }
+      },
+      
+      metadata: { payment_id: payment,order_id:orderId,project_id:project_id, payment_user_id:user.payment_user_id }
+    }
+    );
+    console.log('ribhusession',session)
     // 5. Update the payment record with session info
     await db('Payments')
       .where({ payment_id: payment })  // ✅ correct where condition
       .update({
         stripe_checkout_session_id: session.id,
-        stripe_payment_intent_id: session.payment_intent
       });
 
     // 6. Send session URL to frontend

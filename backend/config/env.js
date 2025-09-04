@@ -1,0 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
+export const PORT=process.env.PORT;
+export const MONGO_URI=process.env.MONGO_URI;
+export const STRIPE_SECRET_KEY=process.env.STRIPE_SECRET_KEY;
+export const STRIPE_WEBHOOK_SECRET=process.env.STRIPE_WEBHOOK_SECRET;
+export const PROJECT_A_JWT_SECRET=process.env.PROJECT_A_JWT_SECRET;
+export const OUR_PROJECT_JWT_SECRET=process.env.OUR_PROJECT_JWT_SECRET;
+export const DB_HOST=process.env.DB_HOST;
+export const DB_PORT=process.env.DB_PORT;
+export const DB_USER=process.env.DB_USER;
+export const DB_PASSWORD=process.env.DB_PASSWORD;
+export const DB_NAME=process.env.DB_NAME;
+export const NODE_ENV=process.env.NODE_ENV;

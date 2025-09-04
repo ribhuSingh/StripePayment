@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-const SECRET=process.env.SECRET_KEY;
+import { OUR_PROJECT_JWT_SECRET } from '../../../config/env.js';
+const SECRET=OUR_PROJECT_JWT_SECRET;
 const generateToken = async (req, res) => {
   try {
     const payload={

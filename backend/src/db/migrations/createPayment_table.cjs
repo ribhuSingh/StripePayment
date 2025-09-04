@@ -58,6 +58,13 @@ exports.up = async function (knex) {
     table.json("payload");
     table.timestamp("received_at").defaultTo(knex.fn.now());
   });
+  await knex.schema.createTable("Admin",(table)=>{
+    table.increments("id");
+    table.string("email", 255);
+    table.string("password",255);
+    table.timestamp("created_at").defaultTo(knex.fn.now());
+    table.timestamp("updated_at").defaultTo(knex.fn.now());
+  })
 }
 
 /**
@@ -70,4 +77,5 @@ exports.down = async function (knex) {
   await knex.schema.dropTableIfExists("Charges");
   await knex.schema.dropTableIfExists("PaymentUsers");
   await knex.schema.dropTableIfExists("Projects");
+  await knex.schema.dropTableIfExists("Admin");
 }

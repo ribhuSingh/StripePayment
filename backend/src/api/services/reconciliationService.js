@@ -1,11 +1,7 @@
 import Stripe from 'stripe';
-import knex from 'knex';
-import knexConfig from '../../../knexfile.cjs';
-
-// Use environment variable for DB config, defaulting to 'development'
-const environment = process.env.NODE_ENV || 'development';
-const db = knex(knexConfig[environment]);
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import db from '../../../config/db.js';
+import { STRIPE_SECRET_KEY } from '../../../config/env.js';
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 /**
  * Compares local database records with Stripe records and fixes discrepancies.
@@ -13,7 +9,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
  */
 export const runReconciliation = async () => {
     console.log('--- Starting Daily Payment Reconciliation ---');
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);    const report = {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);    
+    const report = {
         startTime: new Date().toISOString(),
         endTime: null,
         status: 'IN_PROGRESS',
@@ -25,6 +22,8 @@ export const runReconciliation = async () => {
         mismatchedAmount: [],
         mismatchedCurrency: [],
         mismatchedOrderId: [],
+        mismatchedPaymentUserId: [],
+        mismatchedProjectId: [],
         failedUpdates: [], // To track records that failed to update/insert
     };
 
@@ -55,6 +54,7 @@ export const runReconciliation = async () => {
         // --- 3. Reconcile Stripe records against the DB ---
         for (const stripePayment of stripeData) {
             const localRecord = localPaymentMap.get(stripePayment.id);
+                            console.log('saksham',stripePayment.metadata)
 
             if (!localRecord) {
                 // Case 1: Stripe has the payment, but the DB doesn't. Create it.
@@ -62,6 +62,8 @@ export const runReconciliation = async () => {
                 try {
                     await db('payments').insert({
                         order_id: stripePayment.metadata?.order_id || null,
+                        project_id:stripePayment.metadata?.project_id || null,
+                        payment_user_id:stripePayment.metadata?.payment_user_id || null,
                         stripe_payment_intent_id: stripePayment.id,
                         amount: stripePayment.amount / 100, // Stripe stores in cents
                         currency: stripePayment.currency,
@@ -104,6 +106,18 @@ export const runReconciliation = async () => {
                     if (localRecord.order_id !== stripeOrderId) {
                         updates.order_id = stripeOrderId;
                         report.mismatchedOrderId.push(stripePayment.id);
+                    }
+                    // Case 6: Payment User ID mismatch
+                    const stripePaymentUserId=stripePayment.metadata?.payment_user_id || null;
+                    if(localRecord.payment_user_id !== stripePaymentUserId){
+                        updates.payment_user_id=stripePaymentUserId;
+                        report.mismatchedPaymentUserId.push(stripePayment.id);
+                    }
+                    // Case 7: Project ID mismatch
+                    const stripeProjectId=stripePayment.metadata?.project_id || null;
+                    if(localRecord.project_id !== stripeProjectId){
+                        updates.project_id=stripeProjectId;
+                        report.mismatchedProjectId.push(stripePayment.id)
                     }
 
                     // If there are any updates, execute a single DB query

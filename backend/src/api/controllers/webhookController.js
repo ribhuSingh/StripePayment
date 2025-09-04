@@ -1,14 +1,13 @@
 import Stripe from 'stripe';
 import { updatePaymentStatusByPaymentId ,storeWebhookEvent} from '../services/paymentService.js';
-import dotenv from 'dotenv';
-dotenv.config();
+import { STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET } from '../../../config/env.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 const handleStripeWebhook = async (req, res) => {
 
   const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const endpointSecret = STRIPE_WEBHOOK_SECRET;
   let event;
 
   // 1. Verify the event signature
@@ -21,43 +20,46 @@ const handleStripeWebhook = async (req, res) => {
     const object = event.data.object;
     const paymentId = object?.metadata?.payment_id || null;
     const projectId = object?.metadata?.project_id || null;
+    const orderId=object?.metadata?.orderId || null;
+    console.log('intent_id',event.data.object.payment_intent,event.type)
     await storeWebhookEvent({
-    event_id: event.id,
-    project_id: projectId,
-    payment_id: paymentId,
-    type: event.type,
-    object_id: object.id,
-    payload: object
-  });
+      event_id: event.id,
+      project_id: projectId,
+      payment_id: paymentId,
+      type: event.type,
+      object_id: orderId,
+      payload: object
+    });
+
 
   // 2. Handle event types
   switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      const paymentId=session.metadata.payment_id;
-      console.log('✅ Payment Succeeded:', session.metadata);
-      await updatePaymentStatusByPaymentId(paymentId, 'succeeded', session.payment_intent);
-      break;
-    }
 
-    case 'checkout.session.async_payment_failed': {
-      const session = event.data.object;
+    case 'payment_intent.payment_failed': {
+      const intent = event.data.object;
       console.log('❌ Async Payment Failed:', paymentId);
-      await updatePaymentStatusByPaymentId(paymentId, 'failed', session.payment_intent);
+      await updatePaymentStatusByPaymentId(paymentId, 'failed', intent.id);
       break;
     }
 
-    case 'checkout.session.async_payment_succeeded': {
-      const session = event.data.object;
+    case 'payment_intent.succeeded': {
+      const intent = event.data.object;
       console.log('✅ Async Payment Succeeded:',paymentId);
-      await updatePaymentStatusByPaymentId(paymentId, 'succeeded', session.payment_intent);
+      await updatePaymentStatusByPaymentId(paymentId, 'succeeded', intent.id);
       break;
     }
+    
 
     case 'checkout.session.expired': {
       const session = event.data.object;
       console.log('⌛ Session Expired:', paymentId);
       await updatePaymentStatusByPaymentId(paymentId, 'expired', session.payment_intent);
+      break;
+    }
+    case 'payment_intent.canceled':{
+      const intent=event.data.object;
+      console.log('Payment_intent canceled',paymentId);
+      await updatePaymentStatusByPaymentId(paymentId,'canceled',intent.id);
       break;
     }
 
