@@ -2,36 +2,30 @@ import React from "react";
 import { RiAdminFill } from "react-icons/ri";
 import { Navigate, useNavigate } from "react-router-dom";
 import Register from "./Register";
+import { useEffect } from "react";
+import { useState } from "react";
+import axios from '../api/axiosConfig.js';
 const DashboardAdmin = () => {
+      const [data, setData] = useState([]);
+
+    useEffect(()=>{
+        handleDashboard();
+    },[])
      const navigate = useNavigate();
-  // Dummy data (replace later with API call)
-  const data = [
-    {
-      id: 1,
-      name: "Saksham Sharma",
-      email: "saksham@example.com",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Komal Preet",
-      email: "komal@example.com",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      name: "Aditya Rathore",
-      email: "aditya@example.com",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Deepak Saini",
-      email: "deepak@example.com",
-      status: "Active",
-    },
-    
-  ];
+     const handleDashboard= async() =>{
+        try{
+         const res =   await axios.get('/dashboardInfo/allData?page=1&limit=10');
+         console.log("Api res",res.data);
+         setData(res.data.data);
+         
+           
+        }
+        catch(error){
+            alert(error.response?.data?.msg || "Something Horribly went Wrong")
+        }
+     }
+
+  
     const   handleRegister=()=>{
         navigate("/register")
     }
@@ -55,11 +49,11 @@ const DashboardAdmin = () => {
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-blue-500 text-white">
             <tr>
-              <th className="py-3 px-4 text-left">ID</th>
+              <th className="py-3 px-4 text-left">Payment Id</th>
               {/* <th className="py-3 px-4 text-left">Payment Id</th> */}
               <th className="py-3 px-4 text-left">Email</th>
-              <th className="py-3 px-4 text-left">Payment Id</th>
-              <th className="py-3 px-4 text-left">Project Id</th>
+              <th className="py-3 px-4 text-left">Project Url</th>
+              {/* <th className="py-3 px-4 text-left">Project Id</th> */}
               <th className="py-3 px-4 text-left">Status</th>
               <th className="py-3 px-4 text-left">Date</th>
               <th className="py-3 px-4 text-left">Time</th>
@@ -68,18 +62,41 @@ const DashboardAdmin = () => {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {data.map((user) => (
-              <tr
-                key={user.id}
-                className="border-b hover:bg-gray-100 transition"
-              >
-                <td className="py-3 px-4">{user.id}</td>
-                <td className="py-3 px-4">{user.name}</td>
-                <td className="py-3 px-4">{user.email}</td>
-              
-                 
-              </tr>
-            ))}
+           {data.length>0?(
+            data.map((item) => {
+              const dateObj = new Date(item.created_at);
+              return (
+                <tr
+                  key={item.payment_id}
+                  className="border-b hover:bg-gray-100 transition"
+                >
+                  <td className="py-3 px-4">{item.payment_id}</td>
+                  <td className="py-3 px-4">{item.user_email}</td>
+                  <td className="py-3 px-4">
+                    <a
+                      href={item.project_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      {item.project_url}
+                    </a>
+                  </td>
+                  <td className="py-3 px-4">{item.status}</td>
+                  <td className="py-3 px-4">{dateObj.toLocaleDateString()}</td>
+                  <td className="py-3 px-4">{dateObj.toLocaleTimeString()}</td>
+                  <td className="py-3 px-4">₹{item.amount}</td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td className="py-3 px-4 text-center" colSpan={7}>
+                No records found
+              </td>
+            </tr>
+          )}
+         
           </tbody>
         </table>
       </div>

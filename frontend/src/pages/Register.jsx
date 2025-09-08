@@ -9,7 +9,7 @@ const Register=()=>{
     const navigate=useNavigate();
     const handleRegister=async()=>{
         try{
-            await axios.post('/auth/register',{username,email,password});
+            await axios.post('/auth/register',{email,password});
             navigate('/dashboard')
         }
         catch(error){

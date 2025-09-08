@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await api.post("/login", { email, password });
+      const res = await api.post("/auth/login", { email, password });
       if (res?.data?.success) {
         login(res.data.user);
         navigate("/dashboard"); // go to dashboard after login
