@@ -1,5 +1,5 @@
 import db from "../../../config/db.js";
-
+import { NODE_ENV } from "../../../config/env.js";
 const dashboardInfoController = async (req, res) => {
   try {
     // Step 1: Set up Pagination Parameters
@@ -40,6 +40,8 @@ const dashboardInfoController = async (req, res) => {
 
     // Step 5: Send the final, structured response
     res.status(200).json({
+      success: true,
+      message: "Dashboard data fetched successfully.",
       data,
       pagination: {
         total_items: totalItems,
@@ -51,7 +53,8 @@ const dashboardInfoController = async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching dashboard info:", error);
-    res.status(500).json({ error: "Failed to fetch dashboard information." });
+    const message = NODE_ENV === 'development' ? error.message : 'Failed to fetch dashboard information.';
+    res.status(500).json({ success: false, message });
   }
 };
 export default dashboardInfoController;
